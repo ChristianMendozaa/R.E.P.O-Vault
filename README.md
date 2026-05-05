@@ -72,6 +72,86 @@ Use `.env.example` as the template if you need to recreate the file.
 .\.venv\Scripts\python.exe main.py
 ```
 
+## Finding the Correct Save File
+
+`R.E.P.O Vault` edits the real `.es3` save file inside your `saves` folder.
+
+On Windows, the default save location is:
+
+```text
+C:\Users\YOUR_USERNAME\AppData\LocalLow\semiwork\Repo\saves
+```
+
+Your Windows username will be different, so for each person the first part of the path changes.
+
+Example:
+
+```text
+C:\Users\ALIENWARE M16 R1\AppData\LocalLow\semiwork\Repo\saves
+```
+
+### How to open that folder
+
+1. Open File Explorer.
+2. Enable hidden folders if you cannot see `AppData`.
+3. Go to `C:\Users\YOUR_USERNAME\AppData\LocalLow\semiwork\Repo\saves`.
+
+Quick way:
+
+1. Click the File Explorer address bar.
+2. Paste `%USERPROFILE%\AppData\LocalLow\semiwork\Repo\saves`
+3. Press `Enter`.
+
+### What you will see inside `saves`
+
+Inside `saves` there should be one or more folders with names like:
+
+```text
+REPO_SAVE_2026_05_01_23_46_39
+```
+
+Those folder names change from save to save.
+
+Inside each save folder, the main file to edit is the `.es3` file that has the exact same name as the folder.
+
+Correct example:
+
+```text
+C:\Users\ALIENWARE M16 R1\AppData\LocalLow\semiwork\Repo\saves\REPO_SAVE_2026_05_01_23_46_39\REPO_SAVE_2026_05_01_23_46_39.es3
+```
+
+Do **not** edit backup files.
+
+Wrong example:
+
+```text
+REPO_SAVE_2026_05_01_23_46_39_BACKUP1.es3
+```
+
+If you see both files:
+- edit `REPO_SAVE_2026_05_01_23_46_39.es3`
+- do not edit `REPO_SAVE_2026_05_01_23_46_39_BACKUP1.es3`
+
+Rule of thumb:
+- edit the `.es3` file that matches the folder name exactly
+- ignore files with `BACKUP` in the name
+- ignore other backup variants such as `.backup.es3`
+
+### If `AppData` is hidden
+
+On Windows 11:
+
+1. Open File Explorer.
+2. Click `View`.
+3. Click `Show`.
+4. Enable `Hidden items`.
+
+On Windows 10:
+
+1. Open File Explorer.
+2. Open the `View` tab.
+3. Enable `Hidden items`.
+
 ## Running Tests
 
 Preferred command:
