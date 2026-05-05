@@ -92,6 +92,26 @@ What the test suite covers:
 .\.venv\Scripts\python.exe -m PyInstaller "R.E.P.O Vault.spec" --clean
 ```
 
+## Publish a GitHub Release
+
+This repository includes a GitHub Actions workflow that builds and publishes the Windows executable to GitHub Releases whenever you push a tag that starts with `v`.
+
+Typical flow:
+
+```powershell
+git add .
+git commit -m "Prepare release"
+git push origin main
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+What happens automatically after the tag push:
+- GitHub Actions runs the test suite
+- PyInstaller builds `R.E.P.O Vault.exe`
+- GitHub creates a Release entry
+- the release uploads both the `.exe` and a `.zip` version as downloadable assets
+
 ## Performance Notes
 
 Recent performance-focused changes:
