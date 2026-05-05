@@ -9,6 +9,107 @@ It focuses on:
 - safe roundtrip save handling
 - automated regression tests for core logic
 
+## How to Use
+
+1. Open the program.
+2. Press `Open Save`.
+3. Go to your `R.E.P.O` saves folder.
+4. Open the `.es3` file that has the exact same name as its save folder.
+5. Edit what you want in the app.
+6. Press `Save`.
+
+If you downloaded the release build, just run the `.exe`.
+
+If you are running from source:
+
+```powershell
+.\.venv\Scripts\python.exe main.py
+```
+
+## Which Save File to Edit
+
+`R.E.P.O Vault` edits the real `.es3` save file inside your `saves` folder.
+
+On Windows, the default save location is:
+
+```text
+C:\Users\YOUR_USERNAME\AppData\LocalLow\semiwork\Repo\saves
+```
+
+Quick way to open it:
+
+1. Open File Explorer.
+2. Click the address bar.
+3. Paste `%USERPROFILE%\AppData\LocalLow\semiwork\Repo\saves`
+4. Press `Enter`.
+
+Inside `saves` there should be one or more folders with names like:
+
+```text
+REPO_SAVE_2026_05_01_23_46_39
+```
+
+Inside each save folder, the file you should edit is the `.es3` file with the exact same name as the folder.
+
+Correct example:
+
+```text
+C:\Users\YOUR_USERNAME\AppData\LocalLow\semiwork\Repo\saves\REPO_SAVE_2026_05_01_23_46_39\REPO_SAVE_2026_05_01_23_46_39.es3
+```
+
+Do not edit backup files.
+
+Wrong examples:
+
+```text
+REPO_SAVE_2026_05_01_23_46_39_BACKUP1.es3
+REPO_SAVE_2026_05_01_23_46_39.backup.es3
+```
+
+Rule of thumb:
+- edit the `.es3` file that matches the folder name exactly
+- do not edit files with `BACKUP` in the name
+- do not edit `.backup.es3` files
+
+## If You Cannot See `AppData`
+
+`AppData` is usually hidden on Windows.
+
+On Windows 11:
+
+1. Open File Explorer.
+2. Click `View`.
+3. Click `Show`.
+4. Enable `Hidden items`.
+
+On Windows 10:
+
+1. Open File Explorer.
+2. Open the `View` tab.
+3. Enable `Hidden items`.
+
+## App Preview
+
+### Dashboard Home
+
+![Dashboard Home](screenshots/Dashboard%20Home.png)
+
+### Overview
+
+![Overview](screenshots/Overview.png)
+
+### Players
+
+![Players](screenshots/Players.png)
+
+### Items
+
+![Items](screenshots/Items.png)
+
+### Truck
+
+![Truck](screenshots/Truck.png)
+
 ## Highlights
 
 - Retro terminal inspired UI with a dashboard home and focused workspaces
@@ -65,93 +166,6 @@ REPO_VAULT_SAVE_PASSWORD=Why would you want to cheat?... :o It's no fun. :') :'D
 ```
 
 Use `.env.example` as the template if you need to recreate the file.
-
-## Running the App
-
-```powershell
-.\.venv\Scripts\python.exe main.py
-```
-
-## Finding the Correct Save File
-
-`R.E.P.O Vault` edits the real `.es3` save file inside your `saves` folder.
-
-On Windows, the default save location is:
-
-```text
-C:\Users\YOUR_USERNAME\AppData\LocalLow\semiwork\Repo\saves
-```
-
-Your Windows username will be different, so for each person the first part of the path changes.
-
-Example:
-
-```text
-C:\Users\ALIENWARE M16 R1\AppData\LocalLow\semiwork\Repo\saves
-```
-
-### How to open that folder
-
-1. Open File Explorer.
-2. Enable hidden folders if you cannot see `AppData`.
-3. Go to `C:\Users\YOUR_USERNAME\AppData\LocalLow\semiwork\Repo\saves`.
-
-Quick way:
-
-1. Click the File Explorer address bar.
-2. Paste `%USERPROFILE%\AppData\LocalLow\semiwork\Repo\saves`
-3. Press `Enter`.
-
-### What you will see inside `saves`
-
-Inside `saves` there should be one or more folders with names like:
-
-```text
-REPO_SAVE_2026_05_01_23_46_39
-```
-
-Those folder names change from save to save.
-
-Inside each save folder, the main file to edit is the `.es3` file that has the exact same name as the folder.
-
-Correct example:
-
-```text
-C:\Users\ALIENWARE M16 R1\AppData\LocalLow\semiwork\Repo\saves\REPO_SAVE_2026_05_01_23_46_39\REPO_SAVE_2026_05_01_23_46_39.es3
-```
-
-Do **not** edit backup files.
-
-Wrong example:
-
-```text
-REPO_SAVE_2026_05_01_23_46_39_BACKUP1.es3
-```
-
-If you see both files:
-- edit `REPO_SAVE_2026_05_01_23_46_39.es3`
-- do not edit `REPO_SAVE_2026_05_01_23_46_39_BACKUP1.es3`
-
-Rule of thumb:
-- edit the `.es3` file that matches the folder name exactly
-- ignore files with `BACKUP` in the name
-- ignore other backup variants such as `.backup.es3`
-
-### If `AppData` is hidden
-
-On Windows 11:
-
-1. Open File Explorer.
-2. Click `View`.
-3. Click `Show`.
-4. Enable `Hidden items`.
-
-On Windows 10:
-
-1. Open File Explorer.
-2. Open the `View` tab.
-3. Enable `Hidden items`.
-
 ## Running Tests
 
 Preferred command:
