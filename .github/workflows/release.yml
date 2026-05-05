@@ -27,6 +27,10 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      - name: Prepare temp directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Path "C:\tmp" -Force | Out-Null
+
       - name: Run tests
         run: python run_tests.py
 
