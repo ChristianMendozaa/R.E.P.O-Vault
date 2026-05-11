@@ -25,7 +25,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller
+          pip install nuitka
 
       - name: Prepare temp directory
         shell: pwsh
@@ -35,7 +35,16 @@ jobs:
         run: python run_tests.py
 
       - name: Build executable
-        run: pyinstaller "R.E.P.O Vault.spec" --clean
+        run: >
+          python -m nuitka
+          --standalone
+          --onefile
+          --windows-console-mode=disable
+          --windows-icon-from-ico=icon.ico
+          --include-data-files=icon.ico=icon.ico
+          --output-filename="R.E.P.O Vault.exe"
+          --output-dir=dist
+          main.py
 
       - name: Package portable zip
         shell: pwsh
@@ -48,3 +57,16 @@ jobs:
             dist/R.E.P.O Vault.exe
             dist/R.E.P.O-Vault-windows.zip
           generate_release_notes: true
+          body: |
+            > ⚠️ **Windows may flag this file — it is a false positive**
+            >
+            > R.E.P.O Vault uses cryptographic libraries to read and write `.es3` save files. This triggers antivirus heuristics even though the app is completely safe. The full source code is available in this repository for review.
+            >
+            > **SmartScreen blocks the app on launch:**
+            > Click **"More info"** → **"Run anyway"**
+            >
+            > **Windows Defender flags the download:**
+            > In the browser download bar click **"Keep"** → **"Keep anyway"**.
+            > Or open **Windows Security → Virus & threat protection → Protection history**, find the entry, and click **Allow**.
+            >
+            > This file has been submitted to Microsoft for false positive review.
