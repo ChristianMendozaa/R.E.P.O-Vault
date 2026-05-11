@@ -1,10 +1,11 @@
 from pathlib import Path
 
-from customtkinter import CTk, CTkFrame, CTkLabel, CTkOptionMenu, CTkScrollableFrame, set_appearance_mode, set_default_color_theme
+from customtkinter import CTk, CTkFrame, CTkLabel, CTkOptionMenu, CTkProgressBar, CTkScrollableFrame, set_appearance_mode, set_default_color_theme
 from tkinter import filedialog, messagebox
 
 from .constants import APP_NAME, SAVEFILE_DIR, STATE_OPTIONS, VERSION, WINDOW_SIZE
-from .items import render_items_view
+from .inventory_logic import add_item, build_type_id_map, remove_item
+from .items import STATIC_ITEM_IDS, render_items_view
 from .players import PLAYER_FIELD_METADATA, render_players_view
 from .resources import set_window_icon
 from .save_service import load_save_data, save_save_data
@@ -401,16 +402,14 @@ class EditorApp:
         cards = [
             ("Level", str(self.get_run_stats().get("level", 0)), "Current progress", COLORS["accent"]),
             ("Currency", str(self.get_run_stats().get("currency", 0)), "Run economy", COLORS["success"]),
-            ("Lives", str(self.get_run_stats().get("lives", 0)), "Crew lives available", COLORS["info"]),
-            ("Total Haul", str(self.get_run_stats().get("totalHaul", 0)), "Accumulated result", COLORS["text"]),
             ("Players", str(self.get_player_count()), "Registered crew", COLORS["text"]),
             ("Save State", self.get_save_state_label().split("  ")[0], "Spawn on load", COLORS["accent"]),
         ]
-        for col in range(3):
+        for col in range(2):
             metrics.grid_columnconfigure(col, weight=1)
         for index, (label, value, hint, accent) in enumerate(cards):
             card = create_stat_card(metrics, label, value, hint=hint, accent=accent)
-            row, col = divmod(index, 3)
+            row, col = divmod(index, 2)
             card.grid(row=row, column=col, sticky="nsew", padx=(0 if col == 0 else SPACE["md"], 0), pady=(0, SPACE["md"]))
 
         section_grid = CTkFrame(scroll, fg_color="transparent")
@@ -459,22 +458,15 @@ class EditorApp:
             grid.grid_columnconfigure(col, weight=1)
 
         run_stats = self.get_run_stats()
-        team_root = self.json_data["teamName"]
 
         field_specs = [
             ("Level", "Current run level.", run_stats.get("level", 0), "level", "Level updated"),
             ("Currency", "Available money for purchases and upgrades.", run_stats.get("currency", 0), "currency", "Currency updated"),
-            ("Lives", "Available team lives in this run.", run_stats.get("lives", 0), "lives", "Lives updated"),
-            ("Total Haul", "Total haul stored in the active save.", run_stats.get("totalHaul", 0), "totalHaul", "Total haul updated"),
-            ("Team Name", "Visible crew name for this save.", team_root.get("value", ""), "value", "Team name updated"),
         ]
 
         for index, (label, description, initial, target_key, target_message) in enumerate(field_specs):
             card, entry = self.build_field_card(grid, label, description, initial)
-            if label == "Team Name":
-                self.bind_text_entry(entry, team_root, target_key, target_message)
-            else:
-                self.bind_numeric_entry(entry, run_stats, target_key, target_message)
+            self.bind_numeric_entry(entry, run_stats, target_key, target_message)
             row, col = divmod(index, 2)
             card.grid(row=row, column=col, sticky="nsew", padx=(0 if col == 0 else SPACE["md"], 0), pady=(0, SPACE["md"]))
             self.field_entries[label] = entry
@@ -519,7 +511,7 @@ class EditorApp:
         CTkLabel(header, text="Power / Truck", font=FONTS["display"], text_color=COLORS["text"]).pack(anchor="w", padx=SPACE["lg"], pady=(SPACE["lg"], 6))
         CTkLabel(
             header,
-            text="Dedicated screen for truck energy, station charges, power crystals and the save spawn target.",
+            text="Manage power crystals loaded in the truck and the save spawn target.",
             font=FONTS["body"],
             text_color=COLORS["text_muted"],
             wraplength=780,
@@ -527,35 +519,50 @@ class EditorApp:
         ).pack(anchor="w", padx=SPACE["lg"], pady=(0, SPACE["lg"]))
 
         root_data = self.get_root_data()
-        run_stats = self.get_run_stats()
-        power_crystals = root_data.get("itemsPurchased", {}).get("Item Power Crystal", 0)
+        type_id_map = build_type_id_map(root_data, STATIC_ITEM_IDS)
 
-        metrics = CTkFrame(scroll, fg_color="transparent")
-        metrics.pack(fill="x", pady=(0, SPACE["lg"]))
-        for col in range(3):
-            metrics.grid_columnconfigure(col, weight=1)
-        stat_cards = [
-            ("Station Charges", str(run_stats.get("chargingStationCharge", 0)), "Current available charge", COLORS["info"]),
-            ("Truck Energy", str(run_stats.get("chargingStationChargeTotal", 0)), "Total truck capacity", COLORS["accent"]),
-            ("Power Crystals", str(power_crystals), "Purchased units", COLORS["success"]),
-        ]
-        for index, (label, value, hint, accent) in enumerate(stat_cards):
-            card = create_stat_card(metrics, label, value, hint=hint, accent=accent)
-            card.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else SPACE["md"], 0))
+        _CRYSTAL_MAX = 10
 
-        grid = CTkFrame(scroll, fg_color="transparent")
-        grid.pack(fill="x")
-        for col in range(2):
-            grid.grid_columnconfigure(col, weight=1)
+        crystal_panel = create_panel(scroll, fg_color=COLORS["surface"], border_color=COLORS["border"])
+        crystal_panel.pack(fill="x", pady=(0, SPACE["lg"]))
 
-        field_specs = [
-            ("Charging Station Charges", "Available station charges in the save.", run_stats.get("chargingStationCharge", 0), "chargingStationCharge", "Charging station updated"),
-            ("Truck Energy", "Total truck energy capacity.", run_stats.get("chargingStationChargeTotal", 0), "chargingStationChargeTotal", "Truck energy updated"),
-        ]
-        for index, (label, description, initial, target_key, target_msg) in enumerate(field_specs):
-            card, entry = self.build_field_card(grid, label, description, initial)
-            self.bind_numeric_entry(entry, run_stats, target_key, target_msg)
-            card.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else SPACE["md"], 0), pady=(0, SPACE["md"]))
+        CTkLabel(crystal_panel, text="Power Crystals", font=FONTS["section"], text_color=COLORS["text"]).pack(anchor="w", padx=SPACE["lg"], pady=(SPACE["lg"], 4))
+        CTkLabel(
+            crystal_panel,
+            text="Crystals currently loaded in the truck. Maximum is 6.",
+            font=FONTS["small"],
+            text_color=COLORS["text_muted"],
+        ).pack(anchor="w", padx=SPACE["lg"])
+
+        bar_row = CTkFrame(crystal_panel, fg_color="transparent")
+        bar_row.pack(anchor="w", fill="x", padx=SPACE["lg"], pady=(SPACE["md"], 0))
+
+        current_crystals = int(root_data.get("itemsPurchased", {}).get("Item Power Crystal", 0))
+        progress_val = min(current_crystals / _CRYSTAL_MAX, 1.0)
+
+        bar = CTkProgressBar(bar_row, height=14, corner_radius=6, fg_color=COLORS["surface_alt"], progress_color=COLORS["success"])
+        bar.set(progress_val)
+        bar.pack(side="left", fill="x", expand=True, padx=(0, SPACE["md"]))
+        CTkLabel(bar_row, text=f"{current_crystals} / {_CRYSTAL_MAX}", font=FONTS["body_bold"], text_color=COLORS["text"]).pack(side="left")
+
+        btn_row = CTkFrame(crystal_panel, fg_color="transparent")
+        btn_row.pack(anchor="w", padx=SPACE["lg"], pady=(SPACE["sm"], SPACE["lg"]))
+
+        def _remove_crystal():
+            remove_item(root_data, "Item Power Crystal")
+            self.mark_dirty("Power crystal removed")
+            self.navigate("truck")
+
+        def _add_crystal():
+            if int(root_data.get("itemsPurchased", {}).get("Item Power Crystal", 0)) >= _CRYSTAL_MAX:
+                self.set_status(f"Maximum {_CRYSTAL_MAX} crystals reached", tone="warning")
+                return
+            add_item(root_data, type_id_map, "Item Power Crystal")
+            self.mark_dirty("Power crystal added")
+            self.navigate("truck")
+
+        create_action_button(btn_row, "− 1", _remove_crystal, tone="danger", width=80).pack(side="left", padx=(0, SPACE["sm"]))
+        create_action_button(btn_row, "+ 1", _add_crystal, tone="success", width=80).pack(side="left")
 
         state_card = create_panel(scroll, fg_color=COLORS["surface"])
         state_card.pack(fill="x")

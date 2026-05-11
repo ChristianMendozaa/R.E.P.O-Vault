@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 
 import requests
 from PIL import Image
-from customtkinter import CTkButton, CTkFrame, CTkImage, CTkLabel, CTkScrollableFrame
+from customtkinter import CTkButton, CTkFrame, CTkImage, CTkLabel, CTkProgressBar, CTkScrollableFrame
 
 from .constants import CACHE_DIR
 from .resources import resource_path
@@ -15,12 +15,12 @@ PLAYER_FIELD_METADATA = [
     ("Health", "health", "playerHealth", None, None, "Current player HP. Recommended max: 200."),
     ("Health Upgrade", "health_upgrade", "playerUpgradeHealth", "+20 HP each", COLORS["success_soft"], None),
     ("Stamina", "stamina_upgrade", "playerUpgradeStamina", "+10 SP each", COLORS["success_soft"], None),
-    ("Extra Jump", "extra_jump_upgrade", "playerUpgradeExtraJump", "MAX 1", COLORS["danger_soft"], None),
-    ("Launch", "launch_upgrade", "playerUpgradeLaunch", "~10 rec.", COLORS["success_soft"], None),
+    ("Extra Jump", "extra_jump_upgrade", "playerUpgradeExtraJump", None, None, None),
+    ("Launch", "launch_upgrade", "playerUpgradeLaunch", "~10 recommended", COLORS["success_soft"], None),
     ("Map Player Count", "mapplayercount_upgrade", "playerUpgradeMapPlayerCount", "MAX 1", COLORS["danger_soft"], None),
     ("Speed", "speed_upgrade", "playerUpgradeSpeed", "Caution 4+", COLORS["accent_soft"], None),
-    ("Strength", "strength_upgrade", "playerUpgradeStrength", "~13 rec.", COLORS["success_soft"], None),
-    ("Range", "range_upgrade", "playerUpgradeRange", "~10 rec.", COLORS["success_soft"], None),
+    ("Strength", "strength_upgrade", "playerUpgradeStrength", "~13 recommended", COLORS["success_soft"], None),
+    ("Range", "range_upgrade", "playerUpgradeRange", "~10 recommended", COLORS["success_soft"], None),
     ("Throw", "throw_upgrade", "playerUpgradeThrow", "No hard cap", COLORS["surface_alt"], None),
     ("Crouch Rest", "crouchrest_upgrade", "playerUpgradeCrouchRest", "No hard cap", COLORS["surface_alt"], None),
     ("Tumble Climb", "tumbleclimb_upgrade", "playerUpgradeTumbleClimb", "No hard cap", COLORS["surface_alt"], None),
@@ -181,6 +181,35 @@ def render_players_view(app, parent):
         entry.pack(fill="x", padx=SPACE["md"], pady=(SPACE["md"], SPACE["md"]))
         bulk_entries[suffix] = entry
 
+    hp_preview_frame = CTkFrame(bulk_panel, fg_color="transparent")
+    hp_preview_frame.pack(anchor="w", fill="x", padx=SPACE["lg"], pady=(SPACE["sm"], 0))
+    hp_bar_row = CTkFrame(hp_preview_frame, fg_color="transparent")
+    hp_bar_row.pack(fill="x")
+    hp_current_lbl = CTkLabel(hp_bar_row, text="– / –", font=FONTS["small"], text_color=COLORS["text_muted"])
+    hp_current_lbl.pack(side="left", padx=(0, SPACE["sm"]))
+    hp_bar_bulk = CTkProgressBar(hp_bar_row, height=8, corner_radius=4, fg_color=COLORS["surface_alt"], progress_color=COLORS["info"])
+    hp_bar_bulk.set(0)
+    hp_bar_bulk.pack(side="left", fill="x", expand=True, padx=(0, SPACE["sm"]))
+    hp_max_lbl = CTkLabel(hp_bar_row, text="max –", font=FONTS["small"], text_color=COLORS["text_muted"])
+    hp_max_lbl.pack(side="left")
+
+    def _update_bulk_hp_bar(*_):
+        try:
+            hp_raw = bulk_entries["health"].get().strip()
+            up_raw = bulk_entries["health_upgrade"].get().strip()
+            hp_val = int(hp_raw) if hp_raw else 0
+            up_val = int(up_raw) if up_raw else 0
+            max_hp = 100 + (up_val * 20)
+            progress = min(hp_val / max_hp, 1.0) if max_hp > 0 else 0.0
+            hp_current_lbl.configure(text=f"{hp_val} / {max_hp}")
+            hp_bar_bulk.set(progress)
+            hp_max_lbl.configure(text=f"max {max_hp}")
+        except (ValueError, ZeroDivisionError):
+            pass
+
+    bulk_entries["health"].bind("<KeyRelease>", _update_bulk_hp_bar)
+    bulk_entries["health_upgrade"].bind("<KeyRelease>", _update_bulk_hp_bar)
+
     upgrades = app.get_root_data()
     app.players = []
     for player_id, player_name in app.json_data["playerNames"]["value"].items():
@@ -237,6 +266,17 @@ def render_players_view(app, parent):
         chips.pack(anchor="w")
         CTkLabel(chips, text=f"HP {health_value}", font=FONTS["small_bold"], text_color=COLORS["text"], fg_color=COLORS["info_soft"], corner_radius=999, padx=10, pady=4).pack(side="left", padx=(0, SPACE["sm"]))
         CTkLabel(chips, text=f"Upgrades {upgrade_total}", font=FONTS["small_bold"], text_color=COLORS["text"], fg_color=COLORS["accent_soft"], corner_radius=999, padx=10, pady=4).pack(side="left")
+
+        health_upgrade_val = int(upgrades.get("playerUpgradeHealth", {}).get(player["id"], 0))
+        max_hp = 100 + (health_upgrade_val * 20)
+        hp_progress = min(float(health_value) / max_hp, 1.0) if max_hp > 0 else 0.0
+        hp_bar_row = CTkFrame(meta, fg_color="transparent")
+        hp_bar_row.pack(anchor="w", fill="x", pady=(6, 0))
+        CTkLabel(hp_bar_row, text=f"{health_value} / {max_hp}", font=FONTS["small"], text_color=COLORS["text_muted"]).pack(side="left", padx=(0, SPACE["sm"]))
+        hp_bar = CTkProgressBar(hp_bar_row, height=8, corner_radius=4, fg_color=COLORS["surface_alt"], progress_color=COLORS["info"])
+        hp_bar.set(hp_progress)
+        hp_bar.pack(side="left", fill="x", expand=True, padx=(0, SPACE["sm"]))
+        CTkLabel(hp_bar_row, text=f"max {max_hp}", font=FONTS["small"], text_color=COLORS["text_muted"]).pack(side="left")
 
         fields = CTkFrame(player_card, fg_color="transparent")
         fields.pack(fill="x", padx=SPACE["lg"], pady=(0, SPACE["lg"]))
